@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Istanbul Guest Transfer & City Guide</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        body { background-color: #121212; color: #fff; padding: 12px; display: flex; justify-content: center; }
+        .container { max-width: 500px; width: 100%; background: #1e1e1e; border-radius: 14px; padding: 18px; border: 1px solid #333; position: relative; }
+        
+        /* Language Dropdown */
+        .menu-container { position: absolute; top: 12px; right: 12px; z-index: 999; }
+        .menu-btn { background: #262626; border: 1px solid #444; color: #fff; padding: 6px 12px; font-size: 11px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        .dropdown-content { display: none; position: absolute; right: 0; top: 34px; background: #262626; min-width: 140px; box-shadow: 0px 8px 16px rgba(0,0,0,0.8); z-index: 1000; border-radius: 6px; border: 1px solid #444; overflow: hidden; }
+        .dropdown-content button { color: #fff; padding: 10px; text-align: left; background: none; border: none; width: 100%; cursor: pointer; font-size: 12px; border-bottom: 1px solid #333; }
+        .dropdown-content button:hover { background: #f2a900; color: #121212; }
+        .show { display: block; }
+
+        .header { text-align: center; margin-bottom: 15px; margin-top: 25px; }
+        .header h1 { color: #f2a900; font-size: 20px; margin-bottom: 4px; padding: 0 10px; }
+        .header p { font-size: 12px; color: #aaa; }
+
+        /* Form UI */
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+        .card { background: #262626; border: 2px solid #333; border-radius: 8px; padding: 10px; text-align: center; cursor: pointer; }
+        .card.active { border-color: #f2a900; background: #2d2612; }
+        .card img { width: 100%; height: 55px; object-fit: contain; margin-bottom: 4px; border-radius: 4px; background: #fff; padding: 2px; }
+        .card b { display: block; font-size: 13px; margin-bottom: 2px; }
+        .card span { font-size: 11px; color: #aaa; }
+
+        .form-group { margin-bottom: 10px; }
+        label { font-size: 11px; color: #aaa; display: block; margin-bottom: 4px; }
+        input, select { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #444; background: #121212; color: #fff; font-size: 13px; }
+        input[type="datetime-local"] { color-scheme: dark; }
+
+        .price-box { background: #2d2612; border: 1px solid #f2a900; padding: 12px; text-align: center; margin-top: 12px; border-radius: 6px; }
+        .price-title { font-size: 11px; color: #aaa; margin-bottom: 3px; }
+        .price-amount { font-size: 24px; color: #f2a900; font-weight: bold; }
+
+        .btn { background: #25D366; color: #fff; border: none; width: 100%; padding: 13px; border-radius: 25px; font-size: 14px; font-weight: bold; cursor: pointer; margin-top: 12px; }
+        .btn-secondary { background: transparent; color: #aaa; border: 1px solid #444; width: 100%; padding: 9px; border-radius: 20px; font-size: 11px; cursor: pointer; margin-top: 6px; }
+        .note { font-size: 10px; color: #888; text-align: center; margin-top: 6px; }
+
+        /* Divider & Guide Section */
+        .divider { margin: 25px 0 15px 0; border-bottom: 1px solid #333; text-align: center; position: relative; }
+        .divider span { background: #1e1e1e; padding: 0 10px; position: relative; top: -10px; font-size: 12px; color: #f2a900; font-weight: bold; letter-spacing: 0.5px; }
+
+        .guide-section { margin-top: 15px; }
+        .week-title { background: #262626; border-left: 3px solid #f2a900; padding: 10px; border-radius: 4px; font-size: 13px; font-weight: bold; color: #fff; margin-top: 15px; margin-bottom: 10px; }
+        .category-title { font-size: 12px; color: #f2a900; font-weight: bold; margin: 10px 0 6px 0; }
+        
+        .place-card { background: #161616; border: 1px solid #2a2a2a; border-radius: 6px; padding: 10px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+        .place-info { font-size: 12px; color: #ddd; width: 70%; }
+        .place-info b { display: block; color: #fff; font-size: 13px; margin-bottom: 2px; }
+        .place-info span { font-size: 11px; color: #888; }
+        
+        .map-btn { background: #262626; border: 1px solid #444; color: #f2a900; text-decoration: none; padding: 6px 10px; border-radius: 4px; font-size: 10px; font-weight: bold; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+        .map-btn:hover { background: #f2a900; color: #121212; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- Language Menu -->
+    <div class="menu-container">
+        <button onclick="toggleMenu()" class="menu-btn" id="lblLangBtn">Language ☰</button>
+        <div id="langDropdown" class="dropdown-content">
+            <button onclick="changeLang('TR')">Türkçe</button>
+            <button onclick="changeLang('EN')">English</button>
+            <button onclick="changeLang('RU')">Русский</button>
+            <button onclick="changeLang('AR')">العربية</button>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <div class="header">
+        <h1 id="lblTitle">Istanbul Transfer & City Guide</h1>
+        <p id="lblSub">24/7 VIP Transfer & Istanbul Concierge Service</p>
+    </div>
+
+    <!-- Vehicle Selection -->
+    <div class="grid">
+        <div class="card active" id="cTaxi" onclick="setV('TAXI')">
+            <img src="egea.jpg" alt="Sarı Taksi">
+            <b id="lblTaxiName">Sarı taksi</b>
+            <span id="lblTaxiCap">Maks. 4 Kişi</span>
+        </div>
+        <div class="card" id="cVito" onclick="setV('VITO')">
+            <img src="vito.jpg" alt="Vito">
+            <b id="lblVitoName">Vito VIP</b>
+            <span id="lblVitoCap">Maks. 7 Kişi</span>
+        </div>
+    </div>
+
+    <!-- Direction -->
+    <div class="form-group">
+        <label id="lblDir">Transfer Yönü *:</label>
+        <select id="selDir" onchange="calc()">
+            <option value="HOTEL_TO_AP" id="optDir2">Otel ➔ Havalimanı</option>
+            <option value="AP_TO_HOTEL" id="optDir1">Havalimanı ➔ Otel (Karşılama Dahil +200₺)</option>
+        </select>
+    </div>
+
+    <!-- Airport -->
+    <div class="form-group">
+        <label id="lblAp">Havalimanı *:</label>
+        <select id="selAp" onchange="calc()">
+            <option value="IST">Istanbul Airport (IST)</option>
+            <option value="SAW">Sabiha Gokcen (SAW)</option>
+        </select>
+    </div>
+
+    <!-- Hotel Info -->
+    <div class="form-group">
+        <label id="lblHotel">Otel Adı *:</label>
+        <input type="text" id="txtHotel" placeholder="Örn: Karaköy Port Hotel">
+    </div>
+
+    <div class="grid">
+        <div class="form-group">
+            <label id="lblRoom">Oda No *:</label>
+            <input type="text" id="txtRoom" placeholder="Örn: 204">
+        </div>
+        <div class="form-group">
+            <label id="lblPax">Kişi Sayısı *:</label>
+            <select id="selPax"></select>
+        </div>
+    </div>
+
+    <!-- Guest Name -->
+    <div class="form-group">
+        <label id="lblName">Misafir Adı Soyadı *:</label>
+        <input type="text" id="txtName" placeholder="Örn: John Doe">
+    </div>
+
+    <!-- Flight Code -->
+    <div class="form-group">
+        <label id="lblFlight">Uçuş Kodu (Örn: TK1982) *:</label>
+        <input type="text" id="txtFlight" placeholder="Uçuş kodunuzu giriniz">
+    </div>
+
+    <!-- Payment -->
+    <div class="form-group">
+        <label id="lblPay">Ödeme Şekli *:</label>
+        <select id="selPay" onchange="calc()">
+            <option value="CASH" id="optCash">Araçta Nakit Ödeme</option>
+            <option value="CARD" id="optCard">Araçta Kredi Kartı (+%10 Komisyon)</option>
+        </select>
+    </div>
+
+    <!-- Date & Time -->
+    <div class="form-group">
+        <label id="lblTime">Transfer Tarihi & Saati *:</label>
+        <input type="datetime-local" id="txtTime">
+    </div>
+
+    <!-- Price -->
+    <div class="price-box">
+        <div class="price-title" id="lblPriceTitle">HER ŞEY DÂHİL SABİT FİYAT</div>
+        <div class="price-amount" id="txtPrice">1600 ₺</div>
+    </div>
+
+    <button class="btn" id="btnSend" onclick="send()">WHATSAPP İLE REZERVASYON YAP</button>
+    <button class="btn-secondary" id="btnAsk" onclick="askQuestion()">💬 Sadece Soru Sormak / Canlı Destek</button>
+    <div class="note" id="lblNote">Ödeme doğrudan sürücüye araç içerisinde yapılacaktır.</div>
+
+    <!-- Guide Section Divider -->
+    <div class="divider">
+        <span id="lblGuideHeader">🗺️ İSTANBUL GEZİ REHBERİ & KONUMLAR</span>
+    </div>
+
+    <!-- Guide Content Container -->
+    <div class="guide-section" id="guideContainer"></div>
+
+</div>
+
+<script>
+    let vehicle = "TAXI";
+    let currentLang = "TR";
+
+    function toggleMenu() { document.getElementById("langDropdown").classList.toggle("show"); }
+
+    window.onclick = function(event) {
+        if (!event.target.matches('.menu-btn')) {
+            var dropdowns = document.getElementsByClassName("dropdown-content");
+            for (var i = 0; i < dropdowns.length; i++) {
+                if (dropdowns[i].classList.contains('show')) dropdowns[i].classList.remove('show');
+            }
+        }
+    }
+
+    const translations = {
+        TR: {
+            title: "Istanbul Transfer & Gezi Rehberi", sub: "7/24 Güvenli Transfer & Otel Concierge Hizmeti",
+            taxiName: "Sarı taksi", taxiCap: "Maks. 4 Kişi", vitoName: "Vito VIP", vitoCap: "Maks. 7 Kişi",
+            dir: "Transfer Yönü:", optDir1: "Havalimanı ➔ Otel (Karşılama Dahil +200₺)", optDir2: "Otel ➔ Havalimanı",
+            ap: "Havalimanı:", hotel: "Otel Adı:", room: "Oda No:", pax: "Kişi Sayısı:", name: "Misafir Adı Soyadı:",
+            flight: "Uçuş Kodu (Örn: TK1982) *:", pay: "Ödeme Şekli (Araçta Ödeme):", optCash: "Araçta Nakit Ödeme",
+            optCard: "Araçta Kredi Kartı (+%10 Komisyon)", time: "Transfer Tarihi & Saati:", priceTitle: "HER ŞEY DÂHİL SABİT FİYAT",
+            btnSend: "WHATSAPP İLE REZERVASYON YAP", btnAsk: "💬 Sadece Soru Sormak / Canlı Destek", note: "Ödeme doğrudan sürücüye araç içerisinde yapılacaktır.", paxText: "Kişi",
+            guideHeader: "🗺️ İSTANBUL GEZİ REHBERİ & KONUMLAR", mapBtn: "📍 Harita"
+        },
+        EN: {
+            title: "Istanbul Transfer & City Guide", sub: "24/7 Secure Transfer & Hotel Concierge Desk",
+            taxiName: "Yellow taxi", taxiCap: "Max. 4 Persons", vitoName: "Vito VIP", vitoCap: "Max. 7 Persons",
+            dir: "Transfer Direction:", optDir1: "Airport ➔ Hotel (Meet & Greet +200₺)", optDir2: "Hotel ➔ Airport",
+            ap: "Airport:", hotel: "Hotel Name:", room: "Room No:", pax: "Number of Pax:", name: "Guest Full Name:",
+            flight: "Flight Code (e.g. TK1982) *:", pay: "Payment Method (Pay in Car):", optCash: "Cash in Car",
+            optCard: "Credit Card in Car (+10% Commission)", time: "Transfer Date & Time:", priceTitle: "ALL-INCLUSIVE FIXED PRICE",
+            btnSend: "BOOK NOW VIA WHATSAPP", btnAsk: "💬 Ask a Question / Live Support", note: "Payment will be made directly to the driver in the car.", paxText: "Persons",
+            guideHeader: "🗺️ ISTANBUL CITY GUIDE & LOCATIONS", mapBtn: "📍 Map"
+        },
+        RU: {
+            title: "Трансфер и Гид по Стамбулу", sub: "Круглосуточный трансфер и консьерж-сервис",
+            taxiName: "Желтое такси", taxiCap: "Макс. 4 чел.", vitoName: "Vito VIP", vitoCap: "Макс. 7 чел.",
+            dir: "Направление трансфера:", optDir1: "Аэропорт ➔ Отель (Встреча +200₺)", optDir2: "Отель ➔ Аэропорт",
+            ap: "Аэропорт:", hotel: "Название отеля:", room: "Номер комнаты:", pax: "Количество гостей:", name: "Имя Фамилия гостя:",
+            flight: "Код рейса (напр. TK1982) *:", pay: "Способ оплаты:", optCash: "Наличными водителю",
+            optCard: "Кредитной картой (+10% комиссия)", time: "Дата и время трансфера:", priceTitle: "ФИКСИРОВАННАЯ ЦЕНА",
+            btnSend: "ЗАБРОНИРОВАТЬ ЧЕРЕЗ WHATSAPP", btnAsk: "💬 Задать вопрос / Поддержка", note: "Оплата производится водителю в машине.", paxText: "чел.",
+            guideHeader: "🗺️ ГИД ПО СТАМБУЛУ И ЛОКАЦИИ", mapBtn: "📍 Карта"
+        },
+        AR: {
+            title: "توصيل المطار ودليل إسطنبول", sub: "خدمة التوصيل والاستعلامات على مدار 24 ساعة",
+            taxiName: "تاكسي أصفر", taxiCap: "الحد الأقصى 4 أشخاص", vitoName: "فيتو VIP", vitoCap: "الحد الأقصى 7 أشخاص",
+            dir: "اتجاه النقل:", optDir1: "المطار ➔ الفندق (شامل الاستقبال +200₺)", optDir2: "الفندق ➔ المطار",
+            ap: "المطار:", hotel: "اسم الفندق:", room: "رقم الغرفة:", pax: "عدد الأفراد:", name: "اسم الضيف بالكامل:",
+            flight: "رمز الرحلة (مثال: TK1982) *:", pay: "طريقة الدفع:", optCash: "نقداً في السيارة",
+            optCard: "بطاقة ائتمان (+10% عمولة)", time: "تاريخ ووقت النقل:", priceTitle: "سعر ثابت شامل كل شيء",
+            btnSend: "احجز الآن عبر واتساب", btnAsk: "💬 طرح سؤال / الدعم المباشر", note: "يتم الدفع مباشرة للسائق داخل السيارة.", paxText: "أشخاص",
+            guideHeader: "🗺️ دليل إسطنبول والمواقع", mapBtn: "📍 الخريطة"
+        }
+    };
+
+    const guideData = {
+        TR: [
+            {
+                week: "📅 1. HAFTA: Tarihi Yarımada, Çarşılar & Galata",
+                cats: [
+                    {
+                        name: "📍 Tarihi Yarımada Klasikleri",
+                        items: [
+                            { title: "Ayasofya-i Kebir Cami-i Şerifi", sub: "Sultanahmet Meydanı", query: "Hagia Sophia Istanbul" },
+                            { title: "Sultanahmet Camii", sub: "Sultanahmet Meydanı", query: "Blue Mosque Istanbul" },
+                            { title: "Yerebatan Sarnıcı", sub: "Sultanahmet", query: "Basilica Cistern Istanbul" },
+                            { title: "Topkapı Sarayı & Gülhane Parkı", sub: "Cankurtaran", query: "Topkapi Palace Istanbul" },
+                            { title: "Tarihi Sultanahmet Köftecisi", sub: "Mola için klasik", query: "Tarihi Sultanahmet Koftecisi" }
+                        ]
+                    },
+                    {
+                        name: "📍 Çarşılar & Süleymaniye",
+                        items: [
+                            { title: "Mısır Çarşısı & Kurukahveci Mehmet Efendi", sub: "Eminönü", query: "Spice Bazaar Istanbul" },
+                            { title: "Kapalıçarşı", sub: "Çemberlitaş / Beyazıt", query: "Grand Bazaar Istanbul" },
+                            { title: "Süleymaniye Camii ve Seyir Terası", sub: "Süleymaniye", query: "Suleymaniye Mosque" }
+                        ]
+                    },
+                    {
+                        name: "📍 Karaköy & Beyoğlu Kültür Hattı",
+                        items: [
+                            { title: "Galata Kulesi & Galata Sokakları", sub: "Bereketzade", query: "Galata Tower Istanbul" },
+                            { title: "İstiklal Caddesi & St. Antuan Kilisesi", sub: "Beyoğlu", query: "Istiklal Street Istanbul" },
+                            { title: "Galataport & İstanbul Modern", sub: "Karaköy Sahil", query: "Galataport Istanbul" }
+                        ]
+                    },
+                    {
+                        name: "📍 Haliç Kıyıları & Pierre Loti",
+                        items: [
+                            { title: "Fener Rum Patrikhanesi & Kırmızı Mektep", sub: "Fener", query: "Phanar Greek Orthodox College" },
+                            { title: "Balat Renkli Evleri & Merdivenli Yokuş", sub: "Balat", query: "Balat Colorful Houses" },
+                            { title: "Pierre Loti Tepesi & Tarihi Kahve", sub: "Eyüpsultan", query: "Pierre Loti Hill" }
+                        ]
+                    }
+                ]
+            },
+            {
+                week: "📅 2. HAFTA: Boğaz Hattı, Saraylar & Sahil Şeridi",
+                cats: [
+                    {
+                        name: "📍 Beşiktaş & Dolmabahçe",
+                        items: [
+                            { title: "Dolmabahçe Sarayı", sub: "Vişnezade", query: "Dolmabahce Palace" },
+                            { title: "Beşiktaş Deniz Müzesi & Çarşı", sub: "Beşiktaş", query: "Istanbul Naval Museum" },
+                            { title: "Yıldız Parkı & Malta Köşkü", sub: "Beşiktaş", query: "Yildiz Park Istanbul" }
+                        ]
+                    },
+                    {
+                        name: "📍 Ortaköy, Arnavutköy & Bebek",
+                        items: [
+                            { title: "Ortaköy Meydanı & Mecidiye Camii", sub: "Ortaköy", query: "Ortakoy Mosque" },
+                            { title: "Arnavutköy Sahili & Ahşap Yalılar", sub: "Arnavutköy", query: "Arnavutkoy Sahil" },
+                            { title: "Bebek Parkı & Rumeli Hisarı", sub: "Boğaz'ın en dar noktası", query: "Rumeli Fortress" }
+                        ]
+                    },
+                    {
+                        name: "📍 Boğaz'ın Kuzeyi & Kent Parkları",
+                        items: [
+                            { title: "Emirgan Korusu & Sakıp Sabancı Müzesi", sub: "Emirgan", query: "Emirgan Park" },
+                            { title: "Atatürk Arboretumu", sub: "Belgrad Ormanı Kıyısı", query: "Ataturk Arboretum" },
+                            { title: "Nişantaşı Abdi İpekçi Caddesi", sub: "Nişantaşı", query: "Abdi Ipekci Street" }
+                        ]
+                    }
+                ]
+            },
+            {
+                week: "📅 3. HAFTA: Anadolu Yakası & Adalar",
+                cats: [
+                    {
+                        name: "📍 Kadıköy & Moda",
+                        items: [
+                            { title: "Kadıköy Tarihi Çarşısı & Sahaflar", sub: "Kadıköy", query: "Kadikoy Market" },
+                            { title: "Moda Sahil Parkı & Moda Caddesi", sub: "Moda", query: "Moda Sahil Parki" },
+                            { title: "Müze Gazhane", sub: "Hasanpaşa", query: "Muze Gazhane" }
+                        ]
+                    },
+                    {
+                        name: "📍 Üsküdar & Kuzguncuk",
+                        items: [
+                            { title: "Kız Kulesi", sub: "Salacak Sahili", query: "Maidens Tower" },
+                            { title: "Kuzguncuk Renkli Evleri & İcadiye", sub: "Kuzguncuk", query: "Kuzguncuk Istanbul" },
+                            { title: "Beylerbeyi Sarayı & Çengelköy Çınaraltı", sub: "Üsküdar Sahil", query: "Beylerbeyi Palace" }
+                        ]
+                    },
+                    {
+                        name: "📍 Prens Adaları Kaçamağı",
+                        items: [
+                            { title: "Büyükada & Aya Yorgi Kilisesi", sub: "Büyükada", query: "Buyukada Aya Yorgi" },
+                            { title: "Heybeliada & Ruhban Okulu", sub: "Heybeliada", query: "Heybeliada" }
+                        ]
+                    }
+                ]
+            },
+            {
+                week: "📅 4. HAFTA: Derin İstanbul, Müze & Manzara",
+                cats: [
+                    {
+                        name: "📍 Tarihi Surlar & Müzeler",
+                        items: [
+                            { title: "Rahmi M. Koç Müzesi", sub: "Hasköy", query: "Rahmi M Koc Museum" },
+                            { title: "Miniatürk & Panoramik 1453", sub: "Sütlüce / Topkapı", query: "Miniaturk" }
+                        ]
+                    },
+                    {
+                        name: "📍 Panoramik Seyir Noktaları",
+                        items: [
+                            { title: "Fatih Korusu (Otağtepe)", sub: "Kavacık - İki Köprü Manzarası", query: "Otagtepe Park" },
+                            { title: "Çamlıca Tepesi & Seyir Terası", sub: "Üsküdar", query: "Camlica Hill" }
+                        ]
+                    }
+                ]
+            }
+        ],
+        EN: [
+            {
+                week: "📅 WEEK 1: Historic Peninsula, Bazaars & Galata",
+                cats: [
+                    {
+                        name: "📍 Historic Peninsula Classics",
+                        items: [
+                            { title: "Hagia Sophia Grand Mosque", sub: "Sultanahmet Square", query: "Hagia Sophia Istanbul" },
+                            { title: "Blue Mosque", sub: "Sultanahmet Square", query: "Blue Mosque Istanbul" },
+                            { title: "Basilica Cistern", sub: "Sultanahmet", query: "Basilica Cistern Istanbul" },
+                            { title: "Topkapi Palace & Gulhane Park", sub: "Cankurtaran", query: "Topkapi Palace Istanbul" }
+                        ]
+                    },
+                    {
+                        name: "📍 Bazaars & Suleymaniye",
+                        items: [
+                            { title: "Spice Bazaar & Turkish Coffee Market", sub: "Eminonu", query: "Spice Bazaar Istanbul" },
+                            { title: "Grand Bazaar", sub: "Beyazit", query: "Grand Bazaar Istanbul" },
+                            { title: "Suleymaniye Mosque & Terrace", sub: "Suleymaniye", query: "Suleymaniye Mosque" }
+                        ]
+                    },
+                    {
+                        name: "📍 Galata & Beyoglu Route",
+                        items: [
+                            { title: "Galata Tower & Streets", sub: "Bereketzade", query: "Galata Tower Istanbul" },
+                            { title: "Istiklal Street & St. Anthony Church", sub: "Beyoglu", query: "Istiklal Street Istanbul" },
+                            { title: "Galataport & Istanbul Modern", sub: "Karakoy Waterfront", query: "Galataport Istanbul" }
+                        ]
+                    }
+                ]
+            },
+            {
+                week: "📅 WEEK 2: Bosphorus, Palaces & Coastline",
+                cats: [
+                    {
+                        name: "📍 Besiktas & Ortakoy",
+                        items: [
+                            { title: "Dolmabahce Palace", sub: "Visnezade", query: "Dolmabahce Palace" },
+                            { title: "Ortakoy Square & Mosque", sub: "Ortakoy", query: "Ortakoy Mosque" },
+                            { title: "Rumeli Fortress & Bebek Park", sub: "Bosphorus Coast", query: "Rumeli Fortress" }
+                        ]
+                    }
+                ]
+            },
+            {
+                week: "📅 WEEK 3: Asian Side & Princes' Islands",
+                cats: [
+                    {
+                        name: "📍 Kadikoy, Uskudar & Islands",
+                        items: [
+                            { title: "Maiden's Tower", sub: "Salacak Coast", query: "Maidens Tower" },
+                            { title: "Kuzguncuk Colorful Houses", sub: "Kuzguncuk", query: "Kuzguncuk Istanbul" },
+                            { title: "Buyukada & St. George Church", sub: "Princes Islands", query: "Buyukada Aya Yorgi" }
+                        ]
+                    }
+                ]
+            }
+        ]
+    };
+
+    const basePrices = { TAXI: { IST: 1600, SAW: 1800 }, VITO: { IST: 2000, SAW: 2200 } };
+
+    function changeLang(lang) {
+        currentLang = lang;
+        const t = translations[lang] || translations['EN'];
+        document.getElementById('lblTitle').innerText = t.title;
+        document.getElementById('lblSub').innerText = t.sub;
+        document.getElementById('lblTaxiName').innerText = t.taxiName;
+        document.getElementById('lblTaxiCap').innerText = t.taxiCap;
+        document.getElementById('lblVitoName').innerText = t.vitoName;
+        document.getElementById('lblVitoCap').innerText = t.vitoCap;
+        document.getElementById('lblDir').innerText = t.dir;
+        document.getElementById('optDir1').innerText = t.optDir1;
+        document.getElementById('optDir2').innerText = t.optDir2;
+        document.getElementById('lblAp').innerText = t.ap;
+        document.getElementById('lblHotel').innerText = t.hotel;
+        document.getElementById('lblRoom').innerText = t.room;
+        document.getElementById('lblPax').innerText = t.pax;
+        document.getElementById('lblName').innerText = t.name;
+        document.getElementById('lblFlight').innerText = t.flight;
+        document.getElementById('lblPay').innerText = t.pay;
+        document.getElementById('optCash').innerText = t.optCash;
+        document.getElementById('optCard').innerText = t.optCard;
+        document.getElementById('lblTime').innerText = t.time;
+        document.getElementById('lblPriceTitle').innerText = t.priceTitle;
+        document.getElementById('btnSend').innerText = t.btnSend;
+        document.getElementById('btnAsk').innerText = t.btnAsk;
+        document.getElementById('lblNote').innerText = t.note;
+        document.getElementById('lblGuideHeader').innerText = t.guideHeader;
+
+        updatePaxOptions();
+        renderGuide();
+        
+        var dropdowns = document.getElementsByClassName("dropdown-content");
+        for (var i = 0; i < dropdowns.length; i++) dropdowns[i].classList.remove('show');
+    }
+
+    function renderGuide() {
+        const container = document.getElementById('guideContainer');
+        const data = guideData[currentLang] || guideData['EN'];
+        const mapText = translations[currentLang]?.mapBtn || '📍 Map';
+        
+        let html = '';
+        data.forEach(w => {
+            html += `<div class="week-title">${w.week}</div>`;
+            w.cats.forEach(c => {
+                html += `<div class="category-title">${c.name}</div>`;
+                c.items.forEach(item => {
+                    const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.query)}`;
+                    html += `
+                        <div class="place-card">
+                            <div class="place-info">
+                                <b>${item.title}</b>
+                                <span>${item.sub}</span>
+                            </div>
+                            <a href="${mapUrl}" target="_blank" class="map-btn">${mapText}</a>
+                        </div>
+                    `;
+                });
+            });
+        });
+        container.innerHTML = html;
+    }
+
+    function updatePaxOptions() {
+        const paxSelect = document.getElementById('selPax');
+        const currentVal = paxSelect.value;
+        paxSelect.innerHTML = '';
+        const maxPax = vehicle === 'TAXI' ? 4 : 7;
+        const paxLabel = translations[currentLang].paxText;
+        for (let i = 1; i <= maxPax; i++) {
+            const opt = document.createElement('option');
+            opt.value = i;
+            opt.textContent = i + " " + paxLabel;
+            paxSelect.appendChild(opt);
+        }
+        if(currentVal <= maxPax && currentVal > 0) paxSelect.value = currentVal;
+    }
+
+    function setV(type) {
+        vehicle = type;
+        document.getElementById('cTaxi').classList.toggle('active', type === 'TAXI');
+        document.getElementById('cVito').classList.toggle('active', type === 'VITO');
+        updatePaxOptions();
+        calc();
+    }
+
+    function calc() {
+        const ap = document.getElementById('selAp').value;
+        const dir = document.getElementById('selDir').value;
+        let total = basePrices[vehicle][ap];
+        if (dir === 'AP_TO_HOTEL') total += 200;
+        if (document.getElementById('selPay').value === 'CARD') total *= 1.10;
+        document.getElementById('txtPrice').innerText = Math.round(total) + " ₺";
+    }
+
+    function send() {
+        const t = translations[currentLang];
+        const dir = document.getElementById('selDir').value;
+        const ap = document.getElementById('selAp').value === 'IST' ? 'Istanbul Airport (IST)' : 'Sabiha Gokcen (SAW)';
+        const hotel = document.getElementById('txtHotel').value.trim();
+        const room = document.getElementById('txtRoom').value.trim();
+        const pax = document.getElementById('selPax').value;
+        const name = document.getElementById('txtName').value.trim();
+        const flight = document.getElementById('txtFlight').value.trim();
+        
+        const isCard = document.getElementById('selPay').value === 'CARD';
+        const payStr = isCard ? (currentLang==='TR'?"Araçta kart":"Credit Card in Car") : (currentLang==='TR'?"Araçta Nakit":"Cash in Car");
+        const payEmoji = isCard ? "💳" : "💸";
+        
+        const time = document.getElementById('txtTime').value;
+        const price = document.getElementById('txtPrice').innerText;
+
+        if(!hotel || !room || !name || !time || !flight) { 
+            alert(currentLang==='TR' ? "Lütfen Otel Adı, Oda No, Misafir Adı, Uçuş Kodu ve Tarih/Saat alanlarını eksiksiz doldurun." : "Please fill in Hotel Name, Room No, Guest Name, Flight Code and Date/Time fields."); 
+            return; 
+        }
+
+        const dirText = dir === 'AP_TO_HOTEL' ? (currentLang==='TR'?'Havalimanı ➔ Otel (Karşılama Dahil)':'Airport ➔ Hotel (Meet & Greet)') : (currentLang==='TR'?'Otel ➔ Havalimanı':'Hotel ➔ Airport');
+        const vEmoji = vehicle === 'TAXI' ? '🚖' : '🚙';
+        const vName = vehicle === 'TAXI' ? (currentLang==='TR'?'Sarı taksi':'Yellow taxi') : 'Vito VIP';
+
+        const msg = `🚨 *YENİ TRANSFER REZERVASYONU*\n\n` +
+                    `${vEmoji} *${t.msgCar || 'Araç'}:* ${vName}\n` +
+                    `🗺️ *${t.msgDir || 'Yön'}:* ${dirText}\n` +
+                    `✈️ *${t.msgAp || 'Havalimanı'}:* ${ap}\n` +
+                    `🏨 *${t.msgHotel || 'Otel'}:* ${hotel} (Room: ${room})\n` +
+                    `👤 *${t.msgGuest || 'Misafir'}:* ${name} (${pax} ${t.paxText})\n` +
+                    `🎫 *${t.msgFlight || 'Uçuş Kodu'}:* ${flight}\n` +
+                    `📅 *${t.msgTime || 'Tarih/Saat'}:*\n${time.replace('T', ' ')}\n` +
+                    `${payEmoji} *${t.msgPay || 'Ödeme'}:* ${payStr}\n` +
+                    `💰 *${t.msgTotal || 'Tutar'}:* ${price}\n\n` +
+                    `_Müşteri tarafından web üzerinden gönderilmiştir._`;
+
+        window.open(`https://wa.me/905521679703?text=${encodeURIComponent(msg)}`, '_blank');
+    }
+
+    function askQuestion() {
+        window.open(`https://wa.me/905521679703?text=${encodeURIComponent('Merhaba, İstanbul transferi veya gezilecek yerler hakkında bilgi almak istiyorum.')}`, '_blank');
+    }
+
+    window.onload = function() {
+        const n = new Date();
+        n.setMinutes(n.getMinutes() - n.getTimezoneOffset());
+        document.getElementById('txtTime').value = n.toISOString().slice(0, 16);
+        changeLang('TR');
+        calc();
+    }
+</script>
+</body>
+</html>
